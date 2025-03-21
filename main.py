@@ -37,7 +37,7 @@ args = parser.parse_args()
 def main():
     print("{}".format(args).replace(', ', ',\n'))
 
-    if re.match('cuda:\d', args.device):
+    if re.match(r'cuda:\d', args.device):
         cuda_num = args.device.split(':')[1]
         os.environ['CUDA_VISIBLE_DEVICES'] = cuda_num
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # if you're using MBP M1, you can also use "mps"
