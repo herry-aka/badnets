@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from dataset import build_poisoned_training_set, build_testset
 from deeplearning import evaluate_badnets, optimizer_picker, train_one_epoch
-from models import BadNet
+from models import BadNet, ResNetWrapper
 
 parser = argparse.ArgumentParser(description='Reproduce the basic backdoor attack in "Badnets: Identifying vulnerabilities in the machine learning model supply chain".')
 parser.add_argument('--dataset', default='MNIST', help='Which dataset to use (MNIST or CIFAR10, default: MNIST)')
@@ -31,7 +31,7 @@ parser.add_argument('--poisoning_rate', type=float, default=0.1, help='poisoning
 parser.add_argument('--trigger_label', type=int, default=1, help='The NO. of trigger label (int, range from 0 to 10, default: 0)')
 parser.add_argument('--trigger_path', default="./triggers/trigger_white.png", help='Trigger Path (default: ./triggers/trigger_white.png)')
 parser.add_argument('--trigger_size', type=int, default=5, help='Trigger Size (int, default: 5)')
-
+parser.add_argument('--model_type', default='badnet', help='Which model to use (badnet or resnet, default: badnet)')
 args = parser.parse_args()
 
 def main():
@@ -54,7 +54,13 @@ def main():
     data_loader_val_clean    = DataLoader(dataset_val_clean,     batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     data_loader_val_poisoned = DataLoader(dataset_val_poisoned,  batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers) # shuffle 随机化
 
-    model = BadNet(input_channels=dataset_train.channels, output_num=args.nb_classes).to(device)
+    if args.model_type == 'badnet':
+        model = BadNet(input_channels=dataset_train.channels, output_num=args.nb_classes).to(device)
+    elif args.model_type == 'resnet':
+        model = ResNetWrapper(ouput_num=args.nb_classes).to(device)
+    else:
+        raise NotImplementedError()
+    
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = optimizer_picker(args.optimizer, model.parameters(), lr=args.lr)
 
